@@ -1,0 +1,48 @@
+name: Build
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby: ['2.4', '2.5', '2.6', '2.7']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Ruby ${{ matrix.ruby }}
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - name: Install dependencies
+        run: |
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+      - name: Rubocop
+        run: rubocop
+      - name: Tests
+        run: rspec
+  publish:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.7'
+      - name: Bundle
+        id: bundle
+        run: |
+          gem build s3_cat.gemspec --output=bundle.gem
+          gem specification bundle.gem version --yaml | ruby -e "require 'yaml'; puts \"::set-output name=version::#{YAML.load(ARGF)}\""
+          gem query --remote --quiet --exact s3_cat | ruby -e "puts \"::set-output name=rubygems-version::#{/s3_cat \((.+?)\)/.match(ARGF.read)[1]}\""
+      - name: Print versions
+        run: |
+          echo "RubyGems version: ${{ steps.bundle.outputs.rubygems-version }}"
+          echo "Build version: ${{ steps.bundle.outputs.version }}"
+      - name: Push to RubyGems
+        if: github.ref == 'refs/heads/master' && steps.bundle.outputs.version != steps.bundle.outputs.rubygems-version
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBY_GEMS_API_ACCESS_KEY }}
+        run: gem push bundle.gem
