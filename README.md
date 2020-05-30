@@ -1,3 +1,6 @@
+[![Gem Version](https://badge.fury.io/rb/s3_cat.svg)](https://badge.fury.io/rb/s3_cat)
+![Build Status](https://github.com/mmateja/s3-cat/workflows/Build/badge.svg?branch=master)
+
 # S3Cat
 
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/s3_cat`. To experiment with that code, run `bin/console` for an interactive prompt.
