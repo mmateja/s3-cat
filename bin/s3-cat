@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 's3_cat'
+
+unless ARGV.size == 1
+  puts 'usage: s3-cat <s3_url>'
+  exit(1)
+end
+
+url, = ARGV
+
+parser = S3Cat::S3UrlParser.new
+lister = S3Cat::FileLister.new
+reader = S3Cat::FileReader.new
+
+bucket, prefix = parser.parse_url(url)
+files = lister.list_files(bucket, prefix)
+reader.read_files(bucket, files, STDOUT)
